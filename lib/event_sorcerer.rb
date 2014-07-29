@@ -51,6 +51,11 @@ module EventSorcerer
       @message_bus || fail(UnsetMessageBus)
     end
 
+    # Public: Mutex to synchronize usage of non-threadsafe time-traveling gems.
+    def time_travel_lock
+      @time_travel_lock ||= Mutex.new
+    end
+
     # Public: Returns the unit_of_work for the current thread. Defaults to
     #         NoUnitOfWork.
     def unit_of_work
