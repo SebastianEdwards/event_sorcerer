@@ -10,7 +10,14 @@ module EventSorcerer
     # Public: Creates a new UnitOfWork instance.
     def initialize
       @identity_map  = {}
+      @meta          = {}
       @pending_saves = []
+    end
+
+    # Public: Add additional meta data to be sent along with any save reciepts
+    #         on the message bus for the duration of the unit of work.
+    def add_meta_data(meta_hash)
+      meta.merge! meta_hash
     end
 
     # Public: Executes all pending saves within a transaction, clears the
@@ -26,7 +33,7 @@ module EventSorcerer
 
       save_receipts.each do |reciept|
         message_bus.publish_events(reciept.id, reciept.klass, reciept.events,
-                                   reciept.meta)
+                                   reciept.meta.merge(meta))
       end
 
       self
@@ -44,6 +51,8 @@ module EventSorcerer
 
     def handle_save(save)
       pending_saves << save
+
+      self
     end
 
     # Public: Stores an aggregate via it's ID into the identity map.
@@ -63,6 +72,9 @@ module EventSorcerer
 
     # Private: Returns the identity map Hash.
     attr_reader :identity_map
+
+    # Private: Returns extra metadata hash.
+    attr_reader :meta
 
     # Private: Returns the pending saves Array.
     attr_reader :pending_saves
