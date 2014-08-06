@@ -14,11 +14,19 @@ module EventSorcerer
       base.class.send :alias_method, :build, :new
       base.extend(ClassMethods)
       base.class.extend(Forwardable)
-      base.class.send :def_delegators, :EventSorcerer, :unit_of_work
+      base.class.send :def_delegators, :EventSorcerer, :event_store,
+                                                       :unit_of_work
     end
 
     # Public: Class methods to be extended onto the including class.
     module ClassMethods
+      # Public: Load all Aggregates of this type.
+      #
+      # Returns an Array of AggregateProxy objects.
+      def all
+        event_store.get_ids_for_type(self.name).map { |id| find(id) }
+      end
+
       # Public: An array of symbols representing the names of the methods which
       #         are events.
       def event_methods

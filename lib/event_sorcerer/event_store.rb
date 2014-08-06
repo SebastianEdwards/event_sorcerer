@@ -34,6 +34,16 @@ module EventSorcerer
       fail NotImplementedError
     end
 
+    # Public: Retrieve the IDs for a given aggregate class. Should be defined
+    #         in a subclass.
+    #
+    # _klass - Text representation of aggregate class.
+    #
+    # Raises a NotImplementedError
+    def get_ids_for_type(_klass)
+      fail NotImplementedError
+    end
+
     # Public: Retrieve the events for a specified aggregate. Should be
     #         defined in a subclass.
     #
