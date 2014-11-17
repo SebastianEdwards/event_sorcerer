@@ -24,7 +24,11 @@ module EventSorcerer
       #
       # Returns an Array of AggregateProxy objects.
       def all
-        event_store.get_ids_for_type(name).map { |id| find(id) }
+        with_all_loaders_for_type do |loaders|
+          loaders.map(&:load).each do |aggregate|
+            unit_of_work.store_aggregate(aggregate)
+          end
+        end
       end
 
       # Public: An array of symbols representing the names of the methods which
@@ -64,8 +68,10 @@ module EventSorcerer
           return unit_of_work.fetch_aggregate(id)
         end
 
-        AggregateLoader.new(self, id).load.tap do |aggregate|
-          unit_of_work.store_aggregate(aggregate)
+        with_loader_for_id(id) do |loader|
+          loader.load.tap do |aggregate|
+            unit_of_work.store_aggregate(aggregate)
+          end
         end
       end
 
@@ -79,8 +85,10 @@ module EventSorcerer
           return unit_of_work.fetch_aggregate(id)
         end
 
-        AggregateLoader.new(self, id, false).load.tap do |aggregate|
-          unit_of_work.store_aggregate(aggregate)
+        with_loader_for_id(id, false) do |loader|
+          loader.load.tap do |aggregate|
+            unit_of_work.store_aggregate(aggregate)
+          end
         end
       end
 
@@ -92,6 +100,61 @@ module EventSorcerer
       def new(id = EventSorcerer.generate_id)
         AggregateCreator.new(self, id).create.tap do |aggregate|
           unit_of_work.store_aggregate(aggregate)
+        end
+      end
+
+      private
+
+      # Private: Grabs the event streams for the aggregate class and yields
+      #          them to a given block.
+      #
+      # block - the block to yield the event stream to.
+      #
+      # Returns the return value of the given block.
+      def with_all_event_streams_for_type(&block)
+        yield event_store.read_event_streams_for_type(name)
+      end
+
+      # Private: Creates AggregateLoaders for an ID and yields it to a given
+      #          block.
+      #
+      # prohibit_new - value of the prohibit_new flag to be passed to loaders.
+      # block        - the block to yield the event stream to.
+      #
+      # Returns the return value of the given block.
+      def with_all_loaders_for_type(prohibit_new = true, &block)
+        with_all_event_streams_for_type do |streams|
+          loaders = streams.map do |stream|
+            AggregateLoader.new(self, stream.id, stream.events,
+                                stream.current_version, prohibit_new)
+          end
+
+          yield loaders
+        end
+      end
+
+      # Private: Grabs the event stream for an ID and yields it to a given
+      #          block.
+      #
+      # id    - the ID of the aggregate to get the event stream for.
+      # block - the block to yield the event stream to.
+      #
+      # Returns the return value of the given block.
+      def with_event_stream_for_id(id, &block)
+        yield event_store.read_event_stream(id)
+      end
+
+      # Private: Creates an AggregateLoader for an ID and yields it to a given
+      #          block.
+      #
+      # id    - the ID of the aggregate to get the event stream for.
+      # block - the block to yield the event stream to.
+      #
+      # Returns the return value of the given block.
+      def with_loader_for_id(id, prohibit_new = true, &block)
+        with_event_stream_for_id(id) do |stream|
+          yield AggregateLoader.new(self, stream.id, stream.events,
+                                    stream.current_version, prohibit_new)
         end
       end
     end

@@ -3,18 +3,17 @@ module EventSorcerer
   class AggregateLoader
     extend Forwardable
 
-    # Public: Shortcut to access the global event_store.
-    def_delegators :EventSorcerer, :event_store
-
     # Public: Creates a new AggregateLoader instance.
     #
     # klass        - class for the aggregate to be loaded.
     # id           - id for the aggregate to be loaded.
     # prohibit_new - whether or not to raise an error if aggregate not existing.
-    def initialize(klass, id, prohibit_new = true)
+    def initialize(klass, id, events, version, prohibit_new = true)
+      @events       = events
       @id           = id
       @klass        = klass
       @prohibit_new = prohibit_new
+      @version      = version
     end
 
     # Public: Wraps and returns aggregate in a proxy.
@@ -29,6 +28,9 @@ module EventSorcerer
 
     private
 
+    # Private: Returns array of Events to hydrate with.
+    attr_reader :events
+
     # Private: Returns the id for the aggregate to be loaded.
     attr_reader :id
 
@@ -37,6 +39,9 @@ module EventSorcerer
 
     # Private: Returns whether new aggregates will be allowed.
     attr_reader :prohibit_new
+
+    # Private: Returns current version of aggregate.
+    attr_reader :version
 
     # Private: Memorizes and returns a new instance of an aggregate. Applies
     #          existing events from the event store.
@@ -49,19 +54,12 @@ module EventSorcerer
       end
     end
 
-    # Private: Memorizes and returns the existing events from the event store.
-    def events
-      @events ||= event_store.read_events(id)
-    end
-
+    # Private: Checks whether the aggregate is completely new.
+    #
+    # Returns true if aggregate is new.
+    # Returns false if aggregate is not new.
     def new_aggregate?
       !version || version == 0
-    end
-
-    # Private: Memorizes and returns the current version number from the event
-    #          store.
-    def version
-      @version ||= event_store.get_current_version(id)
     end
   end
 end
