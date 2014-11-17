@@ -2,6 +2,8 @@
 
 Generic event-sourcing scaffold.
 
+[![Code Climate](https://codeclimate.com/github/SebastianEdwards/event_sorcerer/badges/gpa.svg)](https://codeclimate.com/github/SebastianEdwards/event_sorcerer)
+
 ## Installation
 
 Add this line to your application's Gemfile:
