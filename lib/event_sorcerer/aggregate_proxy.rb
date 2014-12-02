@@ -60,14 +60,14 @@ module EventSorcerer
     # Private: Handles the serialization of event arguments and pushes the
     #          Event object onto the _dirty_events array. Increments the local
     #          version number for the aggregate.
-    def add_dirty_event!(method_sym, *arguments)
+    def add_dirty_event!(time, method_sym, *arguments)
       increment_version!
 
       method = @_aggregate.method(method_sym)
       method.parameters.each.with_index.select { |(type, _), _| type == :req }
 
       details = ArgumentHashifier.hashify(method.parameters, arguments.dup)
-      @_dirty_events << Event.new(method_sym, Time.now, details)
+      @_dirty_events << Event.new(method_sym, time, details)
 
       self
     end
@@ -103,10 +103,14 @@ module EventSorcerer
     def send_event_to_aggregate(method_sym, *arguments, &block)
       fail EventArgumentError if block
 
-      add_dirty_event!(method_sym, *arguments)
+      time = Time.now
+      add_dirty_event!(time, method_sym, *arguments)
 
       expected_args = arguments.slice(0, @_aggregate.method(method_sym).arity)
-      @_aggregate.send method_sym, *expected_args
+
+      EventSorcerer.with_time(time) do
+        @_aggregate.send method_sym, *expected_args
+      end
     rescue StandardError => e
       undo_dirty_event!
       raise e

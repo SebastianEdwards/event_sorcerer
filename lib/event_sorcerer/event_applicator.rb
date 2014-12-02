@@ -12,10 +12,8 @@ module EventSorcerer
     #
     # Returns self.
     def self.apply_event!(aggregate, event)
-      EventSorcerer.time_travel_lock.synchronize do
-        Timecop.freeze(event.created_at) do
-          Invokr.invoke method: event.name, on: aggregate, with: event.details
-        end
+      EventSorcerer.with_time(event.created_at) do
+        Invokr.invoke method: event.name, on: aggregate, with: event.details
       end
 
       self
