@@ -111,7 +111,7 @@ module EventSorcerer
       # block - the block to yield the event stream to.
       #
       # Returns the return value of the given block.
-      def with_all_event_streams_for_type(&block)
+      def with_all_event_streams_for_type()
         yield event_store.read_event_streams_for_type(name)
       end
 
@@ -122,7 +122,7 @@ module EventSorcerer
       # block        - the block to yield the event stream to.
       #
       # Returns the return value of the given block.
-      def with_all_loaders_for_type(prohibit_new = true, &block)
+      def with_all_loaders_for_type(prohibit_new = true)
         with_all_event_streams_for_type do |streams|
           loaders = streams.map do |stream|
             AggregateLoader.new(self, stream.id, stream.events,
@@ -140,7 +140,7 @@ module EventSorcerer
       # block - the block to yield the event stream to.
       #
       # Returns the return value of the given block.
-      def with_event_stream_for_id(id, &block)
+      def with_event_stream_for_id(id)
         yield event_store.read_event_stream(id)
       end
 
@@ -151,7 +151,7 @@ module EventSorcerer
       # block - the block to yield the event stream to.
       #
       # Returns the return value of the given block.
-      def with_loader_for_id(id, prohibit_new = true, &block)
+      def with_loader_for_id(id, prohibit_new = true)
         with_event_stream_for_id(id) do |stream|
           yield AggregateLoader.new(self, stream.id, stream.events,
                                     stream.current_version, prohibit_new)
