@@ -23,6 +23,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rubocop'
   spec.add_development_dependency 'rake'
 
-  spec.add_runtime_dependency 'invokr', '0.0.5'
+  spec.add_runtime_dependency 'invokr', '~> 0.9.5'
   spec.add_runtime_dependency 'timecop', '0.7.1'
 end
