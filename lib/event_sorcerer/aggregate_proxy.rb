@@ -105,7 +105,8 @@ module EventSorcerer
 
       add_dirty_event!(method_sym, *arguments)
 
-      @_aggregate.send method_sym, *arguments
+      expected_args = arguments.slice(0, @_aggregate.method(method_sym).arity)
+      @_aggregate.send method_sym, *expected_args
     rescue StandardError => e
       undo_dirty_event!
       raise e
