@@ -13,7 +13,7 @@ module EventSorcerer
     # Returns self.
     def self.apply_event!(aggregate, event)
       EventSorcerer.with_time(event.created_at) do
-        Invokr.invoke method: event.name, on: aggregate, with: event.details
+        Invokr.invoke method: event.name, on: aggregate, using: event.details
       end
 
       self
