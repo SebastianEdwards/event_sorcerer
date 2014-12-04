@@ -1,5 +1,7 @@
 require 'event_sorcerer/version'
 
+require 'uber/delegates'
+
 require 'event_sorcerer/aggregate'
 require 'event_sorcerer/aggregate_creator'
 require 'event_sorcerer/aggregate_loader'

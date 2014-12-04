@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'invokr', '~> 0.9.6'
   spec.add_runtime_dependency 'timecop', '0.7.1'
+  spec.add_runtime_dependency 'uber', '~> 0.0.11'
 end

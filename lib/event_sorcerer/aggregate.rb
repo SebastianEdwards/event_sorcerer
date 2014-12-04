@@ -13,9 +13,8 @@ module EventSorcerer
     def self.included(base)
       base.class.send :alias_method, :build, :new
       base.extend(ClassMethods)
-      base.class.extend(Forwardable)
-      base.class.send :def_delegators, :EventSorcerer, :event_store,
-                      :unit_of_work
+      base.class.extend(Uber::Delegates)
+      base.class.send :delegates, :EventSorcerer, :event_store, :unit_of_work
     end
 
     # Public: Class methods to be extended onto the including class.

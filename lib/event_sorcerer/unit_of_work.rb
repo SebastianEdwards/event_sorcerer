@@ -2,10 +2,10 @@ module EventSorcerer
   # Public: Provides transactional integrity across multiple aggregate saves.
   #         Also provides an indentity map.
   class UnitOfWork
-    extend Forwardable
+    extend Uber::Delegates
 
     # Public: Shortcuts to access the global event_store and message_bus.
-    def_delegators :EventSorcerer, :event_store, :message_bus
+    delegates :EventSorcerer, :event_store, :message_bus
 
     # Public: Creates a new UnitOfWork instance.
     def initialize

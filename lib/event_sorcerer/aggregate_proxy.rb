@@ -7,14 +7,14 @@ module EventSorcerer
     # Public: Value object which is returned from a successful save.
     class SaveReciept < Struct.new(:id, :klass, :events, :meta); end
 
-    extend Forwardable
+    extend Uber::Delegates
 
     instance_methods.each do |m|
       undef_method(m) unless m =~ /(^__|^nil\?$|^send$|^object_id$|^tap$)/
     end
 
     # Public: Shortcuts to access the global event_store and unit_of_work.
-    def_delegators :EventSorcerer, :event_store, :unit_of_work
+    delegates :EventSorcerer, :event_store, :unit_of_work
 
     # Public: Creates a new AggregateProxy instance.
     #

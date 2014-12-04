@@ -1,8 +1,6 @@
 module EventSorcerer
   # Public: Service class for loading aggregates from the event store.
   class AggregateLoader
-    extend Forwardable
-
     # Public: Creates a new AggregateLoader instance.
     #
     # klass        - class for the aggregate to be loaded.

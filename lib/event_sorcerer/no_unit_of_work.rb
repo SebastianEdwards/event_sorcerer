@@ -2,10 +2,10 @@ module EventSorcerer
   # Public: Handles the API of a UnitOfWork but does nothing.
   module NoUnitOfWork
     class << self
-      extend Forwardable
+      extend Uber::Delegates
 
       # Public: Shortcuts to access the global message_bus.
-      def_delegators :EventSorcerer, :message_bus
+      delegates :EventSorcerer, :message_bus
 
       # Public: Returns nil.
       def fetch_aggregate(_id)
