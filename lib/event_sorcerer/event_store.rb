@@ -14,77 +14,79 @@ module EventSorcerer
     # Public: Append events to a specified aggregate. Should be defined in a
     #         subclass.
     #
-    # _aggregate_id     - UUID of the aggregate as a String.
-    # _klass            - Text representation of aggregate class.
+    # _id               - UUID of the aggregate as a String.
+    # _type             - Text representation of aggregate class.
     # _events           - Array of JSON-serialized events.
     # _expected_version - The current version of the aggregate.
     #
     # Raises a NotImplementedError
-    def append_events(_aggregate_id, _klass, _events, _expected_version)
+    def append_events(_id, _type, _events, _expected_version)
       fail NotImplementedError
     end
 
     # Public: Retrieve the current version for a specified aggregate. Should
     #         be defined in a subclass.
     #
-    # _aggregate_id - UUID of the aggregate as a String.
+    # _id - UUID of the aggregate as a String.
     #
     # Raises a NotImplementedError
-    def get_current_version(_aggregate_id)
+    def get_current_version(_id, _type)
       fail NotImplementedError
     end
 
     # Public: Retrieve the IDs for a given aggregate class. Should be defined
     #         in a subclass.
     #
-    # _klass - Text representation of aggregate class.
+    # _type - Text representation of aggregate class.
     #
     # Raises a NotImplementedError
-    def get_ids_for_type(_klass)
+    def get_ids_for_type(_type)
       fail NotImplementedError
     end
 
     # Public: Retrieve the events for a specified aggregate. Should be defined
     #         in a subclass.
     #
-    # _aggregate_id - UUID of the aggregate as a String.
+    # _id - UUID of the aggregate as a String.
+    # _type - Text representation of aggregate class.
     #
     # Raises a NotImplementedError
-    def read_events(_aggregate_id)
+    def read_events(_id, _type)
       fail NotImplementedError
     end
 
     # Public: Retrieve the event stream for a specified aggregate. Should be
     #         defined in a subclass.
     #
-    # aggregate_id - UUID of the aggregate as a String.
+    # id   - UUID of the aggregate as a String.
+    # type - Text representation of aggregate class.
     #
     # Returns an EventStream
-    def read_event_stream(aggregate_id)
-      EventStream.new(aggregate_id, read_events(aggregate_id),
-                      get_current_version(aggregate_id))
+    def read_event_stream(id, type)
+      EventStream.new id, read_events(id, type), get_current_version(id, type)
     end
 
     # Public: Retrieve the event stream for all aggregates of a given type.
     #         Optionally can be defined in subclass to optimize loading these
     #         aggregates with a minimum of external calls.
     #
-    # klass - Text representation of aggregate class.
+    # type - Text representation of aggregate class.
     #
     # Returns an Array.
-    def read_event_streams_for_type(klass)
-      read_multiple_event_streams get_ids_for_type(klass)
+    def read_event_streams_for_type(type)
+      read_multiple_event_streams get_ids_for_type(type), type
     end
 
     # Public: Retrieve the events for multiple aggregates. Optionally can be
     #         defined in subclass to optimize loading multiple aggregates with
     #         a minimum of external calls.
     #
-    # aggregate_ids - Array of UUIDs of the aggregates as Strings.
+    # ids  - Array of UUIDs of the aggregates as Strings.
+    # type - Text representation of aggregate class.
     #
     # Returns an Array.
-    def read_multiple_event_streams(aggregate_ids)
-      aggregate_ids.map { |id| read_event_stream id }
+    def read_multiple_event_streams(ids, type)
+      ids.map { |id| read_event_stream id, type }
     end
 
     # Public: Ensures events appended within the given block are done so

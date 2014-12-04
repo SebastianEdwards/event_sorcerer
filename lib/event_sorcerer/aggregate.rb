@@ -110,7 +110,7 @@ module EventSorcerer
       # block - the block to yield the event stream to.
       #
       # Returns the return value of the given block.
-      def with_all_event_streams_for_type()
+      def with_all_event_streams_for_type
         yield event_store.read_event_streams_for_type(name)
       end
 
@@ -140,7 +140,7 @@ module EventSorcerer
       #
       # Returns the return value of the given block.
       def with_event_stream_for_id(id)
-        yield event_store.read_event_stream(id)
+        yield event_store.read_event_stream(id, name)
       end
 
       # Private: Creates an AggregateLoader for an ID and yields it to a given
