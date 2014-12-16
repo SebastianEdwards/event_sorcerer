@@ -41,12 +41,15 @@ module EventSorcerer
 
     # Public: Fetches an aggregate via it's ID from the identity map.
     #
-    # id - the ID for the aggregate.
+    # type - the type for the aggregate.
+    # id   - the ID for the aggregate.
     #
     # Returns nil if not found.
     # Returns Aggregate if found.
-    def fetch_aggregate(id)
-      identity_map[id]
+    def fetch_aggregate(type, id)
+      return unless identity_map[type]
+
+      identity_map[type][id]
     end
 
     def handle_save(save)
@@ -61,9 +64,9 @@ module EventSorcerer
     #
     # Returns self.
     def store_aggregate(aggregate)
-      return self if fetch_aggregate(aggregate.id)
-
-      identity_map[aggregate.id] = aggregate
+      type = aggregate.class.to_s
+      identity_map[type] ||= {}
+      identity_map[type][aggregate.id] = aggregate
 
       self
     end

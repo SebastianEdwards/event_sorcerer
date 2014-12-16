@@ -63,8 +63,8 @@ module EventSorcerer
       #
       # Returns an AggregateProxy object.
       def find(id)
-        if unit_of_work.fetch_aggregate(id)
-          return unit_of_work.fetch_aggregate(id)
+        if unit_of_work.fetch_aggregate(to_s, id)
+          return unit_of_work.fetch_aggregate(to_s, id)
         end
 
         with_loader_for_id(id) do |loader|
@@ -80,8 +80,8 @@ module EventSorcerer
       #
       # Returns an AggregateProxy object.
       def find_or_new(id)
-        if unit_of_work.fetch_aggregate(id)
-          return unit_of_work.fetch_aggregate(id)
+        if unit_of_work.fetch_aggregate(to_s, id)
+          return unit_of_work.fetch_aggregate(to_s, id)
         end
 
         with_loader_for_id(id, false) do |loader|

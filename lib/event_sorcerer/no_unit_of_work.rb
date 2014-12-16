@@ -8,7 +8,7 @@ module EventSorcerer
       delegates :EventSorcerer, :message_bus
 
       # Public: Returns nil.
-      def fetch_aggregate(_id)
+      def fetch_aggregate(_type, _id)
         nil
       end
 
