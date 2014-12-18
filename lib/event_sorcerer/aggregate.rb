@@ -57,20 +57,20 @@ module EventSorcerer
         self
       end
 
-      # Public: Load an aggregate out of the event store.
+      # Public: Load an aggregate(s) out of the event store.
       #
-      # id - the ID of the aggregate to load.
+      # id_or_ids - the ID of the aggregate to load or an array of the same.
       #
-      # Returns an AggregateProxy object.
-      def find(id)
-        if unit_of_work.fetch_aggregate(to_s, id)
-          return unit_of_work.fetch_aggregate(to_s, id)
+      # Returns an AggregateProxy object or an array of the same.
+      def find(id_or_ids)
+        return find_many(id_or_ids) if id_or_ids.respond_to?(:each)
+
+        if unit_of_work.fetch_aggregate(to_s, id_or_ids)
+          return unit_of_work.fetch_aggregate(to_s, id_or_ids)
         end
 
-        with_loader_for_id(id) do |loader|
-          loader.load.tap do |aggregate|
-            unit_of_work.store_aggregate(aggregate)
-          end
+        loader_for_id(id_or_ids).load.tap do |aggregate|
+          unit_of_work.store_aggregate(aggregate)
         end
       end
 
@@ -84,10 +84,8 @@ module EventSorcerer
           return unit_of_work.fetch_aggregate(to_s, id)
         end
 
-        with_loader_for_id(id, false) do |loader|
-          loader.load.tap do |aggregate|
-            unit_of_work.store_aggregate(aggregate)
-          end
+        loader_for_id(id, false).load.tap do |aggregate|
+          unit_of_work.store_aggregate(aggregate)
         end
       end
 
@@ -104,56 +102,68 @@ module EventSorcerer
 
       private
 
-      # Private: Grabs the event streams for the aggregate class and yields
-      #          them to a given block.
-      #
-      # block - the block to yield the event stream to.
+      # Private: Creates an AggregateLoader for each persisted aggregate.
       #
       # Returns the return value of the given block.
-      def with_all_event_streams_for_type
-        yield event_store.read_event_streams_for_type(name)
-      end
-
-      # Private: Creates AggregateLoaders for an ID and yields it to a given
-      #          block.
-      #
-      # prohibit_new - value of the prohibit_new flag to be passed to loaders.
-      # block        - the block to yield the event stream to.
-      #
-      # Returns the return value of the given block.
-      def with_all_loaders_for_type(prohibit_new = true)
-        with_all_event_streams_for_type do |streams|
-          loaders = streams.map do |stream|
-            AggregateLoader.new(self, stream.id, stream.events,
-                                stream.current_version, prohibit_new)
-          end
-
-          yield loaders
+      def all_loaders_for_type
+        event_store.read_event_streams_for_type(name).map do |stream|
+          AggregateLoader.new(self, stream.id, stream.events,
+                              stream.current_version, true)
         end
       end
 
-      # Private: Grabs the event stream for an ID and yields it to a given
-      #          block.
+      # Private: Maps an array of IDs replacing with cached aggregate if
+      #          available.
       #
-      # id    - the ID of the aggregate to get the event stream for.
-      # block - the block to yield the event stream to.
+      # ids - the IDs of the aggregates to check the cache from.
       #
-      # Returns the return value of the given block.
-      def with_event_stream_for_id(id)
-        yield event_store.read_event_stream(id, name)
+      # Returns a mixed Array of AggregateProxy objects and IDs.
+      def perform_cache_pass(ids)
+        ids.map do |id|
+          cached = unit_of_work.fetch_aggregate(to_s, id)
+
+          cached ? cached : id
+        end
       end
 
-      # Private: Creates an AggregateLoader for an ID and yields it to a given
-      #          block.
+      # Private: Loads an array of aggregates out of the event store.
+      #
+      # ids - the IDs of the aggregates to load.
+      #
+      # Returns an Array of AggregateProxy objects.
+      def find_many(ids)
+        aggregates = perform_cache_pass(ids)
+
+        uncached_ids = aggregates.reject { |a| a.is_a? self }
+
+        uncached = loaders_for_ids(uncached_ids).reduce({}) do |hash, loader|
+          aggregate = loader.load
+          unit_of_work.store_aggregate(aggregate)
+
+          hash.merge aggregate.id => aggregate
+        end
+
+        aggregates.map do |id_or_agg|
+          uncached[id_or_agg] ? uncached[id_or_agg] : id_or_agg
+        end
+      end
+
+      def loader_for_id(id, prohibit_new = true)
+        stream = event_store.read_event_stream(id, name)
+
+        AggregateLoader.new(self, stream.id, stream.events,
+                            stream.current_version, prohibit_new)
+      end
+
+      # Private: Creates an AggregateLoader for each given ID.
       #
       # id    - the ID of the aggregate to get the event stream for.
-      # block - the block to yield the event stream to.
       #
-      # Returns the return value of the given block.
-      def with_loader_for_id(id, prohibit_new = true)
-        with_event_stream_for_id(id) do |stream|
-          yield AggregateLoader.new(self, stream.id, stream.events,
-                                    stream.current_version, prohibit_new)
+      # Returns an Array of AggregateLoader instances.
+      def loaders_for_ids(ids, prohibit_new = true)
+        event_store.read_multiple_event_streams(ids, name).map do |stream|
+          AggregateLoader.new(self, stream.id, stream.events,
+                              stream.current_version, prohibit_new)
         end
       end
     end
