@@ -1,6 +1,9 @@
 module EventSorcerer
   # Public: Service class for loading aggregates from the event store.
   class AggregateLoader
+    # Public: Returns the id for the aggregate to be loaded.
+    attr_reader :id
+
     # Public: Creates a new AggregateLoader instance.
     #
     # klass        - class for the aggregate to be loaded.
@@ -28,9 +31,6 @@ module EventSorcerer
 
     # Private: Returns array of Events to hydrate with.
     attr_reader :events
-
-    # Private: Returns the id for the aggregate to be loaded.
-    attr_reader :id
 
     # Private: Returns the class for the aggregate to be loaded.3
     attr_reader :klass

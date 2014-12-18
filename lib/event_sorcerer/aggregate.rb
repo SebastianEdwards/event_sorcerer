@@ -23,8 +23,12 @@ module EventSorcerer
       #
       # Returns an Array of AggregateProxy objects.
       def all
-        with_all_loaders_for_type do |loaders|
-          loaders.map(&:load).each do |aggregate|
+        all_loaders_for_type.map do |loader|
+          cached = unit_of_work.fetch_aggregate(to_s, loader.id)
+
+          next cached if cached
+
+          loader.load.tap do |aggregate|
             unit_of_work.store_aggregate(aggregate)
           end
         end
