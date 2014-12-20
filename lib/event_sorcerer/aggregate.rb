@@ -35,9 +35,13 @@ module EventSorcerer
       end
 
       # Public: An array of symbols representing the names of the methods which
-      #         are events.
+      #         are events. Includes event methods of superclass.
       def event_methods
-        @event_methods ||= []
+        if superclass.respond_to? :event_methods
+          _event_methods.concat(superclass.event_methods).uniq
+        else
+          _event_methods
+        end
       end
 
       # Public: Methods defined within this block will have their method symbol
@@ -55,7 +59,7 @@ module EventSorcerer
           !starting_methods.include? method
         end
 
-        event_methods.concat new_events
+        _event_methods.concat new_events
         class_eval(&block)
 
         self
@@ -105,6 +109,12 @@ module EventSorcerer
       end
 
       private
+
+      # Private: An array of symbols representing the names of the methods
+      #          which are events.
+      def _event_methods
+        @_event_methods ||= []
+      end
 
       # Private: Creates an AggregateLoader for each persisted aggregate.
       #
